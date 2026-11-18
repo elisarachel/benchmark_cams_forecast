@@ -1,0 +1,31 @@
+[project]
+name = "benchmark-cams-forecast"
+version = "0.1.0"
+description = "Previsões do CAMS (rodada 00 UTC) na estação CETESB 73, em médias diárias, para o pm25bench"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cdsapi>=0.7",
+    "netcdf4>=1.7",
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "scipy>=1.13",
+    "xarray>=2024.6",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "NPY", "SIM"]
