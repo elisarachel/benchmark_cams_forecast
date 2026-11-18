@@ -335,3 +335,21 @@ def test_outro_erro_esgota_tentativas_e_para(tmp_path: Path) -> None:
         _baixar(cliente, tmp_path)
     # usou todas as tentativas
     assert len(cliente.remotos) == 5
+
+
+def test_media_de_pontos_em_campo_linear(tmp_path: Path) -> None:
+    """Num campo que varia linearmente com a longitude, a média dos pontos é o valor no centro."""
+    # campo constante em todas as horas, para gravar a grade
+    _netcdf(tmp_path, 1e-8, np.arange(0, 103), ["2020-01-01"])
+    # reabre e substitui por um campo linear em longitude: valor = (lon + 50) * 1e-9 kg/m³
+    ds = xr.open_dataset(tmp_path / "a.nc").load()
+    # campo linear
+    ds["pm2p5"].values[:] = ((ds["longitude"] + 50) * 1e-9).values
+    # regrava
+    ds.to_netcdf(tmp_path / "b.nc")
+    # remove o original
+    (tmp_path / "a.nc").unlink()
+    # dois pontos simétricos em volta da estação
+    t = preparar(tmp_path, [LAT, LAT], [LON - 0.1, LON + 0.1])
+    # a interpolação bilinear é exata num campo linear; a média é o valor no centro
+    np.testing.assert_allclose(t["fc_pm2_5_l0"].iloc[0], LON + 50, rtol=1e-4)

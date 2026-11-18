@@ -17,6 +17,9 @@ import argparse
 # math: arredondamento do mínimo de horas válidas
 import math
 
+# Sequence: tipo das listas de coordenadas
+from collections.abc import Sequence
+
 # Path: caminhos de arquivo
 from pathlib import Path
 
@@ -202,16 +205,51 @@ def medias_diarias(serie: xr.DataArray, hora_rodada: int = 0) -> pd.DataFrame:
     return pd.DataFrame(saida, index=pd.Index(datas, name="date"))
 
 
-def preparar(raw: Path, lat: float, lon: float, hora_rodada: int = 0) -> pd.DataFrame:
-    """Tabela ``date`` × ``fc_<var>_l{k}`` a partir dos NetCDF de ``raw``."""
+def interpolar_media(
+    campo: xr.DataArray, lats: Sequence[float], lons: Sequence[float]
+) -> xr.DataArray:
+    """Média, hora a hora, do campo interpolado bilinearmente em vários pontos.
+
+    Cada ponto é interpolado como em ``interpolar``; a média entre os pontos é tirada antes
+    da média diária, para que a previsão represente a mesma média espacial que as
+    observações das estações.
+    """
+    # uma série interpolada por ponto
+    series = [interpolar(campo, la, lo) for la, lo in zip(lats, lons, strict=True)]
+    # empilha numa dimensão nova e tira a média entre os pontos
+    return xr.concat(series, dim="ponto").mean("ponto")
+
+
+def preparar(
+    raw: Path,
+    lat: float | Sequence[float],
+    lon: float | Sequence[float],
+    hora_rodada: int = 0,
+) -> pd.DataFrame:
+    """Tabela ``date`` × ``fc_<var>_l{k}`` a partir dos NetCDF de ``raw``.
+
+    ``lat`` e ``lon`` podem ser um ponto (uma estação) ou listas de pontos (média de
+    estações, ver ``interpolar_media``).
+    """
+    # pontos como listas (um único ponto vira lista de um elemento)
+    lats = [lat] if isinstance(lat, float | int) else list(lat)
+    # longitudes no mesmo formato
+    lons = [lon] if isinstance(lon, float | int) else list(lon)
     # NetCDF da rodada pedida
     ds = abrir(raw, hora_rodada)
     # uma tabela por variável
     tabelas = []
     # percorre as variáveis presentes
     for var in sorted(str(v) for v in ds.data_vars):
-        # valor na estação, convertido para µg/m³
-        serie = interpolar(ds[var], lat, lon) * KG_M3_PARA_UG_M3
+        # um ponto: interpolação simples (resultado idêntico ao de antes); vários: média
+        if len(lats) == 1:
+            # um ponto: interpolação simples (resultado idêntico ao de antes)
+            serie = interpolar(ds[var], lats[0], lons[0])
+        else:
+            # vários pontos: média hora a hora das interpolações
+            serie = interpolar_media(ds[var], lats, lons)
+        # converte para µg/m³
+        serie = serie * KG_M3_PARA_UG_M3
         # médias diárias por lead
         t = medias_diarias(serie, hora_rodada)
         # renomeia l{k} -> fc_<nome>_l{k}
@@ -268,22 +306,33 @@ def main() -> None:
     p.add_argument("--raw", type=Path, default=Path("raw"))
     # pasta de saída (uma subpasta por estação)
     p.add_argument("--saida", type=Path, default=Path("data"))
-    # estação CETESB
-    p.add_argument("--estacao", type=int, default=73)
+    # estação CETESB, ou várias para a média entre estações
+    p.add_argument("--estacao", type=int, nargs="+", default=[73])
+    # nome da pasta de saída (padrão: o código da estação; obrigatório com várias)
+    p.add_argument("--nome")
     # hora da rodada
     p.add_argument("--rodada", default="00:00", choices=["00:00", "12:00"])
     # lê a linha de comando
     a = p.parse_args()
     # hora da rodada como inteiro
     hora = int(a.rodada.split(":")[0])
-    # coordenadas da estação, do benchmark
-    lat, lon = coordenadas_estacao(a.estacao)
-    # tabela diária
-    tabela = preparar(a.raw, lat, lon, hora)
+    # várias estações exigem um nome para a pasta
+    if len(a.estacao) > 1 and not a.nome:
+        p.error("com várias estações, informe --nome para a pasta de saída")
+    # nome da pasta: o informado ou o código da única estação
+    nome = a.nome or str(a.estacao[0])
+    # coordenadas de cada estação, do benchmark
+    coords = [coordenadas_estacao(e) for e in a.estacao]
+    # latitudes
+    lats = [c[0] for c in coords]
+    # longitudes
+    lons = [c[1] for c in coords]
+    # tabela diária (um ponto ou média dos pontos)
+    tabela = preparar(a.raw, lats, lons, hora)
     # grava por ano
-    caminhos = gravar(tabela, a.saida / str(a.estacao))
+    caminhos = gravar(tabela, a.saida / nome)
     # relatório
-    print(f"estação {a.estacao} ({lat}, {lon}); {len(caminhos)} arquivos em {a.saida}")
+    print(f"estações {a.estacao} -> {a.saida / nome}; {len(caminhos)} arquivos")
     # resumo de cobertura para o README
     print(resumo(tabela).to_string())
 

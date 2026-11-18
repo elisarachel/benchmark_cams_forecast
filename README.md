@@ -19,7 +19,18 @@ por data de emissão e lead. São a entrada da trilha opcional de previsão do
 As chaves e os valores do pedido foram conferidos no formulário e nas restrições do dataset
 no ADS em 2026-11-05.
 
-## Colunas de `data/73/{ano}.csv`
+## Pastas de `data/`
+
+| pasta | conteúdo |
+|---|---|
+| `data/73/` | previsão interpolada na estação 73 (Congonhas) |
+| `data/media_sp5/` | média, hora a hora, da previsão interpolada em 5 estações do município de São Paulo (98, 270, 73, 95, 83), antes da média diária |
+
+```bash
+uv run python scripts/preparar_cams.py --estacao 98 270 73 95 83 --nome media_sp5
+```
+
+## Colunas de `data/<pasta>/{ano}.csv`
 
 - **Rodada usada:** a previsão emitida às **00 UTC do dia t** (21h de t−1 no horário
   local). Ela fica disponível na manhã do dia t, coerente com uma emissão no dia t.
