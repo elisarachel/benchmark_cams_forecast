@@ -53,7 +53,7 @@ observações; abaixo disso, `NaN`.
 
 ## Cobertura
 
-Datas de emissão de **2015-01-01 a 2024-12-31** (3.653 dias), todas com as quatro colunas
+Datas de emissão de **2015-01-01 a 2025-12-31** (4.018 dias), todas com as quatro colunas
 `fc_pm2_5_l0` a `fc_pm2_5_l3` válidas (pelo menos 18 das 24 horas em cada dia alvo).
 
 | ano | dias | completos | faltantes |
@@ -68,8 +68,9 @@ Datas de emissão de **2015-01-01 a 2024-12-31** (3.653 dias), todas com as quat
 | 2022 | 365 | 365 | 0 |
 | 2023 | 365 | 365 | 0 |
 | 2024 | 366 | 366 | 0 |
+| 2025 | 365 | 365 | 0 |
 
-Download feito entre 2026-11-10 e 2026-11-18. Janeiro de 2016 falhou nas primeiras tentativas
+Download feito entre 2026-11-10 e 2026-11-19 (2025 baixado por último). Janeiro de 2016 falhou nas primeiras tentativas
 (pedidos presos por horas no ADS) e veio numa nova execução; nenhum bloco ficou faltando.
 
 ## Aviso: série não estacionária
@@ -96,13 +97,14 @@ observada em Congonhas (CETESB, dia com pelo menos 18 h válidas):
 | 2022 | 31,0 | 15,8 |
 | 2023 | 27,1 | 16,7 |
 | 2024 | 22,9 | 19,2 |
+| 2025 | 21,1 | 15,2 |
 
 O salto de 2017 acontece em **2017-01-25**: até 24/01 a previsão de lead 0 fica entre 3 e
 10 µg/m³ e a partir de 25/01 entre 15 e 27 µg/m³. A data coincide com uma quebra de versão do
 sistema listada nas restrições do dataset no ADS (2017-01-24). A queda na virada de 2019
 para 2020 é gradual e não coincide com nenhuma data de troca listada; a causa não foi
 identificada. O período de treino do benchmark (2015–2019) mistura, portanto, dois regimes
-de viés muito diferentes, e o teste (2022–2024) está num terceiro.
+de viés muito diferentes, e o teste está num terceiro.
 
 ## Como reproduzir
 
@@ -138,7 +140,7 @@ Os dados do CAMS são distribuídos pelo ADS sob a licença
 link para a licença e indicação das modificações. Atribuição:
 
 > Contém informações modificadas do Copernicus Atmosphere Monitoring Service (CAMS),
-> 2015–2024. Dados: CAMS global atmospheric composition forecasts, ECMWF, Atmosphere Data
+> 2015–2025. Dados: CAMS global atmospheric composition forecasts, ECMWF, Atmosphere Data
 > Store, doi:10.24381/04a0b097. Modificações: recorte espacial, interpolação bilinear para a
 > estação CETESB 73, conversão para µg/m³ e médias diárias por lead. Nem a Comissão Europeia
 > nem o ECMWF se responsabilizam pelo uso destas informações.
